@@ -32,6 +32,64 @@ void update(int* cells, size_t width, size_t height, snake_t* snake_p,
     // walls, so it does not handle the case where a snake runs off the board.
 
     // TODO: implement!
+    if (g_game_over) {
+        return;
+    }
+
+    int old_pos;
+    old_pos = pos;
+
+    if (input == INPUT_NONE) {
+        input = direction;
+    }
+
+    switch (input) {
+        case INPUT_DOWN:
+            pos = pos + width;
+            direction = INPUT_DOWN;
+            break;
+        case INPUT_UP:
+            pos = pos - width;
+            direction = INPUT_UP;
+            break;
+        case INPUT_LEFT:
+            pos = pos - 1;
+            direction = INPUT_LEFT;
+            break;
+        case INPUT_RIGHT:
+            pos = pos + 1;
+            direction = INPUT_RIGHT;
+            break;
+        default:
+            pos = pos + 1;
+            break;
+    }
+
+    //find if the new cell has a snake
+    bool has_snake = cells[pos] & FLAG_SNAKE;
+
+    //check for game over
+    if (cells[pos] == FLAG_WALL || has_snake) {
+        g_game_over = 1;
+        return;
+    } 
+
+    //find if the new cell has food;
+    bool has_food = cells[pos] & FLAG_FOOD;
+
+    //update the place we left
+    int old_cell = cells[old_pos] ^ FLAG_SNAKE;
+    cells[old_pos] = old_cell;
+
+    //update the snake with grass or not
+    cells[pos] = cells[pos] | FLAG_SNAKE;
+
+    //check for food
+    if (has_food) {
+        cells[pos] = cells[pos] ^ FLAG_FOOD;
+        g_score = g_score + 1;
+        place_food(cells, width, height);
+    }
 }
 
 /** Sets a random space on the given board to food.
@@ -60,7 +118,28 @@ void place_food(int* cells, size_t width, size_t height) {
 void read_name(char* write_into) {
     // TODO: implement! (remove the call to strcpy once you begin your
     // implementation)
-    strcpy(write_into, "placeholder");
+    //strcpy(write_into, "placeholder");
+    printf("Name >\n");
+    fflush(stdout);
+
+    int read_count;
+    while ((read_count = read(0, write_into, 1000)) != 0) {
+        if (read_count < 0) {
+            perror("read");
+            exit(1);
+        } else {
+            write_into[read_count - 1] = 0;
+            read_count--;
+            if (read_count == 0) {
+                fprintf(stderr, "Name Invalid: must be longer than 0 characters.\n");
+                printf("Name >\n");
+                fflush(stdout);
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 /** Cleans up on game over — should free any allocated memory so that the

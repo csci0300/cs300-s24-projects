@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <new>
 
+#include <vector>
+
 /**
  * dmalloc(sz,file,line)
  *      malloc() wrapper. Dynamically allocate the requested amount `sz` of memory and
@@ -56,6 +58,19 @@ struct dmalloc_stats {
     uintptr_t heap_min;                 // smallest allocated addr
     uintptr_t heap_max;                 // largest allocated addr
 };
+
+
+// struct to track metadata of a particualr dmalloc invocation. Each dmalloc call (at a specific 
+// file/linenumber pair) will be associated with a single one of these structs. This allows us to see which 
+// parts of the program use dmalloc the most and have currently active allocations
+struct allocation_tracker {
+    char calling_file[256];                                 // the file this call is located in
+    long calling_line;                                      // the line number of this call 
+    size_t total_allocations;                               // the number times this call was invoked
+    unsigned long long total_bytes_allocated;               // the total number of bytes made by this call
+    std::vector<dmalloc_header *> active_allocations;       // a list of active allocation headers made by this call
+};
+
 
 /**
  * get_statistics(stats)
